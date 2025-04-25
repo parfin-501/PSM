@@ -1,5 +1,7 @@
 # By Simeon Beckford-Tongs BSc MSc Copyright © 2023. All rights reserved.
 # 2D
+
+#Importing all necessary libraries
 import tkinter as tk
 import random
 import math
@@ -7,14 +9,16 @@ import time
 from threading import Thread
 import matplotlib.pyplot as plt
 
-# Global variables
+# Initialising Global variables
 collision_count = 0
 is_running = True
 time_list = []
 collision_count_list = []
 
 class Ball:
+#Defining class Ball
     def __init__(self, canvas, x, y, diameter, color, type):
+    #with the following attributes: canvas, image, diameter, radius, x_speed, y_speed, type, mass
         self.canvas = canvas
         self.image = canvas.create_oval(x, y, x + diameter, y + diameter, fill=color)
         self.diameter = diameter
@@ -25,6 +29,7 @@ class Ball:
         self.mass = self.radius ** 2
 
     def move(self):
+    #calls the following methods:
         self.apply_buoyancy()
         self.apply_air_resistance()
         self.canvas.move(self.image, self.x_speed, self.y_speed)
@@ -54,8 +59,10 @@ class Ball:
         pos = self.canvas.coords(self.image)
         if len(pos) != 4:
             return
+        #If hitting right or left wall the ball bounces off the wall
         if pos[2] >= self.canvas.winfo_width() or pos[0] <= 0:
             self.x_speed = -self.x_speed
+        #If hitting top or botton wall, the ball bounces off the wall
         if pos[3] >= self.canvas.winfo_height() or pos[1] <= 0:
             self.y_speed = -self.y_speed
 
@@ -63,28 +70,34 @@ class Ball:
         return self.canvas.coords(self.image)
 
     def collide_with(self, other):
+        #Check if two balls are overlapping (collision detection)
         my_pos = self.get_pos()
         other_pos = other.get_pos()
         if not my_pos or not other_pos:
             return False
+        #Calculate center coordinates
         x1, y1, x2, y2 = my_pos
         ox1, oy1, ox2, oy2 = other_pos
         center_x = (x1 + x2) / 2
         center_y = (y1 + y2) / 2
         other_center_x = (ox1 + ox2) / 2
         other_center_y = (oy1 + oy2) / 2
+
+        #Distance between centers
         distance = math.sqrt((center_x - other_center_x) ** 2 + (center_y - other_center_y) ** 2)
         return distance < self.radius + other.radius
 
     def delete(self):
-        self.canvas.delete(self.image)
+        self.canvas.delete(self.image) # Remove from canvas
 
 def create_random_ball(canvas, diameter, color, type):
+    #Generate a ball at a random location within the canvas
     x = random.randint(0, int(canvas['width']) - diameter)
     y = random.randint(0, int(canvas['height']) - diameter)
     return Ball(canvas, x, y, diameter, color, type)
 
 def add_particles(canvas, particles, color, type, diameter, number):
+#Adds a particular number of a specific type of particle to the system
     for _ in range(number):
         particle = create_random_ball(canvas, diameter, color, type)
         particles.append(particle)
@@ -92,8 +105,12 @@ def add_particles(canvas, particles, color, type, diameter, number):
 def update(canvas, particles, blue_power, uv_power, start_time, timer_label, timer_display, collision_label):
     global collision_count, is_running, time_list, collision_count_list
 
-    if not is_running:
+    if not is_running: #If is_running is False
         return
+
+    #calculate elapsed_time
+    #update GUI labels for time
+    #check if any red virus particles remain
 
     current_time = time.time()
     elapsed_time = current_time - start_time
@@ -107,6 +124,13 @@ def update(canvas, particles, blue_power, uv_power, start_time, timer_label, tim
 
     for particle in particles:
         particle.move()
+
+    # For each uniques pair of particles,
+        #if collide_with(other):
+        #increment collision_count
+        #update GUI label
+        #swap speeds
+        #If pathogens and disinfectant collide, delete pathogen
 
     for i, particle in enumerate(particles[:-1]):
         for other in particles[i+1:]:
@@ -129,6 +153,7 @@ def update(canvas, particles, blue_power, uv_power, start_time, timer_label, tim
                         break
 
     # UV light effect
+    # Randomly applying UV radiation, with probability uv_power%, turn one particle purple and schedule deletion
     if random.random() < uv_power / 100:
         if particles:
             selected_particle = random.choice(particles)
